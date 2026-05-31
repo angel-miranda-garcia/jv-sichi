@@ -450,3 +450,97 @@ api.sichi.com
 ---
 
 *Documento generado el 31 de mayo de 2026*
+
+---
+
+## 14. Arquitectura de Software — Clean Architecture Ligera
+
+### Decisión
+
+Se adopta **Clean Architecture ligera** como patrón de organización del backend.
+
+No hexagonal pura (overkill para un equipo de uno) ni todo en controllers (difícil de mantener al crecer). Clean Architecture ligera da el 80% de los beneficios con el 40% de la complejidad.
+
+### Beneficios para este proyecto
+
+- Lógica de negocio aislada de frameworks, base de datos y HTTP
+- Fácil de testear sin levantar infraestructura
+- Estructura clara que escala bien al agregar sucursales y features
+- Cambiar MySQL, storage o SignalR sin tocar el dominio
+
+### Estructura de capas
+
+```
+SichiAPI/
+│
+├── Domain/                      -- núcleo, sin dependencias externas
+│   ├── Entities/                -- Screen, Playlist, MediaItem, Schedule...
+│   ├── Enums/                   -- MediaType, ScheduleType, UserRole...
+│   └── Interfaces/              -- contratos: IPlaylistRepository, IStorageService...
+│
+├── Application/                 -- casos de uso, lógica de negocio pura
+│   ├── Playlists/
+│   │   ├── GetPlaylistUseCase.cs
+│   │   ├── UpdatePlaylistUseCase.cs
+│   │   └── AssignToScreenUseCase.cs
+│   ├── Media/
+│   │   ├── UploadMediaUseCase.cs
+│   │   └── DeleteMediaUseCase.cs
+│   ├── Screens/
+│   │   ├── GetScreenStatusUseCase.cs
+│   │   └── ForceRefreshUseCase.cs
+│   ├── Schedules/
+│   │   └── ResolveActivePlaylistUseCase.cs
+│   └── Player/
+│       ├── SyncPlaylistUseCase.cs
+│       └── HeartbeatUseCase.cs
+│
+├── Infrastructure/              -- implementaciones concretas
+│   ├── Persistence/             -- EF Core, DbContext, repositorios
+│   ├── Storage/                 -- disco local, upload, checksum
+│   └── Realtime/                -- SignalR hub implementation
+│
+└── API/                         -- entrada HTTP, sin lógica de negocio
+    ├── Controllers/
+    ├── Hubs/
+    └── Middleware/
+```
+
+### Regla fundamental
+
+```
+Domain      → no depende de nadie
+Application → depende solo de Domain
+Infrastructure → depende de Domain y Application
+API         → depende de todos (solo orquesta)
+```
+
+Ninguna capa puede importar la capa que está "por encima" de ella.  
+Los controllers llaman casos de uso. Los casos de uso llaman interfaces. La infraestructura implementa esas interfaces.
+
+### Ejemplo de flujo — actualizar playlist
+
+```
+PUT /api/playlists/{id}
+        │
+        ▼
+PlaylistsController       (API)
+        │ llama
+        ▼
+UpdatePlaylistUseCase     (Application)
+        │ usa interfaz
+        ▼
+IPlaylistRepository       (Domain — contrato)
+        │ implementado por
+        ▼
+PlaylistRepository        (Infrastructure — EF Core)
+        │
+        ▼
+MySQL
+```
+
+El caso de uso nunca sabe que existe EF Core ni MySQL.
+
+---
+
+*Documento actualizado el 31 de mayo de 2026*
