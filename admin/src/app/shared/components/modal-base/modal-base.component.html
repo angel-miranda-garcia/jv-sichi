@@ -1,0 +1,15 @@
+@if (visible()) {
+  <div class="modal-backdrop" (click)="onBackdropClick()">
+    <div class="modal-panel" role="dialog" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <h2>{{ title() }}</h2>
+        <button type="button" class="modal-close" (click)="onCloseClick()" aria-label="Cerrar">
+          &times;
+        </button>
+      </header>
+      <div class="modal-body">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+}
