@@ -1,0 +1,46 @@
+# .NET / C#
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.nupkg
+project.lock.json
+
+# Angular (admin)
+admin/node_modules/
+admin/dist/
+admin/.angular/
+admin/.env
+
+# Player (Vanilla JS)
+player/node_modules/
+
+# Docker / entorno
+.env
+docker-compose.override.yml
+
+# Sistema operativo (Windows)
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDEs
+.idea/
+*.iml
+.vscode/settings.json
+.vscode/launch.json
+
+# Logs
+*.log
+logs/
+
+# Uploads (archivos subidos en dev)
+api/uploads/
+
+# NO ignorar (referencia):
+#   .env.example
+#   .gitkeep
+#   nginx/nginx.conf
+#   nginx/nginx.prod.conf
