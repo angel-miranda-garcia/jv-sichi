@@ -7,6 +7,7 @@ using Infrastructure.Storage;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Persistence;
+using Infrastructure.Realtime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -91,6 +92,10 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IRealtimeService, RealtimeService>();
+builder.Services.AddScoped<ForceRefreshUseCase>();
+
 builder.Services.AddHostedService<HeartbeatMonitor>();
 builder.Services.AddHostedService<MediaCleanup>();
 
@@ -103,6 +108,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<API.Middleware.UploadRateLimitMiddleware>();
 app.MapControllers();
+app.MapHub<PlayerHub>("/signalr/player");
 
 using (var scope = app.Services.CreateScope())
 {

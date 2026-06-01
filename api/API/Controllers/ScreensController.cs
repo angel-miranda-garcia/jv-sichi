@@ -21,6 +21,7 @@ public class ScreensController : ControllerBase
     private readonly DeleteScreenUseCase _deleteScreenUseCase;
     private readonly IScreenRepository _screenRepository;
     private readonly AssignPlaylistToScreenUseCase _assignPlaylistToScreenUseCase;
+    private readonly ForceRefreshUseCase _forceRefreshUseCase;
 
     public ScreensController(
         GetApprovedScreensUseCase getApprovedScreensUseCase,
@@ -30,7 +31,8 @@ public class ScreensController : ControllerBase
         UpdateScreenUseCase updateScreenUseCase,
         DeleteScreenUseCase deleteScreenUseCase,
         IScreenRepository screenRepository,
-        AssignPlaylistToScreenUseCase assignPlaylistToScreenUseCase)
+        AssignPlaylistToScreenUseCase assignPlaylistToScreenUseCase,
+        ForceRefreshUseCase forceRefreshUseCase)
     {
         _getApprovedScreensUseCase = getApprovedScreensUseCase;
         _getPendingScreensUseCase = getPendingScreensUseCase;
@@ -40,6 +42,7 @@ public class ScreensController : ControllerBase
         _deleteScreenUseCase = deleteScreenUseCase;
         _screenRepository = screenRepository;
         _assignPlaylistToScreenUseCase = assignPlaylistToScreenUseCase;
+        _forceRefreshUseCase = forceRefreshUseCase;
     }
 
     [HttpGet]
@@ -85,6 +88,13 @@ public class ScreensController : ControllerBase
         var adminUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         await _assignPlaylistToScreenUseCase.ExecuteAsync(id, dto.PlaylistId, adminUserId);
         return Ok();
+    }
+
+    [HttpPost("{id:int}/force-refresh")]
+    public async Task<IActionResult> ForceRefresh(int id)
+    {
+        await _forceRefreshUseCase.ExecuteAsync(id);
+        return NoContent();
     }
 
     [HttpDelete("{id:int}")]

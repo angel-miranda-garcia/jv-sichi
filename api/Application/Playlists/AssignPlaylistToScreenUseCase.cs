@@ -1,3 +1,4 @@
+using Domain.Entities;
 using Domain.Exceptions;
 using Domain.Interfaces;
 
@@ -8,15 +9,18 @@ public class AssignPlaylistToScreenUseCase
     private readonly IScreenRepository _screenRepository;
     private readonly IPlaylistRepository _playlistRepository;
     private readonly IAuditService _auditService;
+    private readonly IRealtimeService _realtimeService;
 
     public AssignPlaylistToScreenUseCase(
         IScreenRepository screenRepository,
         IPlaylistRepository playlistRepository,
-        IAuditService auditService)
+        IAuditService auditService,
+        IRealtimeService realtimeService)
     {
         _screenRepository = screenRepository;
         _playlistRepository = playlistRepository;
         _auditService = auditService;
+        _realtimeService = realtimeService;
     }
 
     public async Task ExecuteAsync(int screenId, int? playlistId, int adminUserId)
@@ -24,9 +28,10 @@ public class AssignPlaylistToScreenUseCase
         var screen = await _screenRepository.GetByIdAsync(screenId)
             ?? throw new NotFoundException($"Screen with id {screenId} was not found.");
 
+        Playlist? playlist = null;
         if (playlistId is not null)
         {
-            _ = await _playlistRepository.GetByIdWithMediaAsync(playlistId.Value)
+            playlist = await _playlistRepository.GetByIdWithMediaAsync(playlistId.Value)
                 ?? throw new NotFoundException($"Playlist with id {playlistId} was not found.");
         }
 
@@ -38,5 +43,13 @@ public class AssignPlaylistToScreenUseCase
             adminUserId,
             screenId,
             $"Playlist {playlistId} assigned to screen {screenId}");
+
+        if (playlistId is not null && playlist is not null)
+        {
+            await _realtimeService.SendPlaylistChangedAsync(
+                screen.ScreenKey,
+                playlistId.Value,
+                playlist.Version);
+        }
     }
 }
