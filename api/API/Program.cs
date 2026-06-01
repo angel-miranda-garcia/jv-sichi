@@ -92,6 +92,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IRealtimeService, RealtimeService>();
 builder.Services.AddScoped<ForceRefreshUseCase>();
@@ -104,6 +107,12 @@ builder.Services.AddHostedService<HeartbeatMonitor>();
 builder.Services.AddHostedService<MediaCleanup>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseMiddleware<API.Middleware.ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
