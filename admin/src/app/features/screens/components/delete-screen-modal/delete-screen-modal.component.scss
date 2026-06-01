@@ -1,0 +1,9 @@
+.btn-danger-confirm {
+  background: var(--status-offline);
+  border: none;
+  color: white;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}

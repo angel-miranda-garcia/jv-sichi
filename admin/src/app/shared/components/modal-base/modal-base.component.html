@@ -8,7 +8,11 @@
         </button>
       </header>
       <div class="modal-body">
+        <ng-content select="[modal-body]" />
         <ng-content />
+      </div>
+      <div class="modal-footer">
+        <ng-content select="[modal-footer]" />
       </div>
     </div>
   </div>

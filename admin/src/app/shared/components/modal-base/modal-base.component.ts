@@ -8,7 +8,7 @@ import { Component, input, output } from '@angular/core';
 })
 export class ModalBaseComponent {
   readonly title = input.required<string>();
-  readonly visible = input(false);
+  readonly visible = input(false, { alias: 'isOpen' });
   readonly closed = output<void>();
 
   onBackdropClick(): void {

@@ -1,0 +1,160 @@
+<div class="page-header">
+  <h1 class="page-title">Pantallas</h1>
+</div>
+
+<div class="tabs">
+  <button
+    type="button"
+    class="tab"
+    [class.tab--active]="activeTab() === 'active'"
+    (click)="setTab('active')"
+  >
+    Activas ({{ screens().length }})
+  </button>
+  <button
+    type="button"
+    class="tab"
+    [class.tab--active]="activeTab() === 'pending'"
+    (click)="setTab('pending')"
+  >
+    Pendientes de aprobación
+    @if (pendingScreens().length > 0) {
+      <span class="tab__badge">{{ pendingScreens().length }}</span>
+    }
+  </button>
+</div>
+
+@if (activeTab() === 'active') {
+  <div class="card">
+    @if (isLoading()) {
+      <p class="loading-text">Cargando pantallas...</p>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Pantalla / Ubicación</th>
+            <th>Estado</th>
+            <th>Playlist Asignada</th>
+            <th>Último Ping</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (screen of screens(); track screen.id) {
+            <tr>
+              <td>
+                <div class="screen-name">{{ screen.name }}</div>
+                <div class="screen-mac">{{ screen.screenKey }}</div>
+              </td>
+              <td>
+                <span
+                  class="status-pill"
+                  [class.status-pill--online]="screen.isOnline"
+                  [class.status-pill--offline]="!screen.isOnline"
+                >
+                  <span class="status-pill__dot"></span>
+                  {{ screen.isOnline ? 'Online' : 'Offline' }}
+                </span>
+              </td>
+              <td>{{ screen.currentPlaylistName ?? '—' }}</td>
+              <td>{{ formatLastPing(screen.lastPing) }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="btn-secondary btn--sm"
+                    (click)="openAssignModal(screen)"
+                  >
+                    Asignar Playlist
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-secondary btn--sm"
+                    (click)="forceRefresh(screen)"
+                  >
+                    Forzar Refresh
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-danger btn--sm"
+                    (click)="openDeleteModal(screen)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-state">No hay pantallas activas</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
+
+@if (activeTab() === 'pending') {
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Device ID</th>
+          <th>Screen Key</th>
+          <th>Primera Conexión</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (screen of pendingScreens(); track screen.id) {
+          <tr>
+            <td>{{ screen.deviceId }}</td>
+            <td>{{ screen.screenKey }}</td>
+            <td>{{ screen.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  type="button"
+                  class="btn-primary btn--sm"
+                  (click)="approveScreen(screen)"
+                >
+                  Aprobar
+                </button>
+                <button
+                  type="button"
+                  class="btn-danger btn--sm"
+                  (click)="rejectScreen(screen)"
+                >
+                  Rechazar
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="empty-state">
+              <div class="empty-icon">🖥</div>
+              <p>No hay dispositivos pendientes de aprobación</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<app-assign-playlist-modal
+  [isOpen]="showAssignModal()"
+  [playlists]="playlists()"
+  [currentPlaylistId]="selectedScreen()?.currentPlaylistId ?? null"
+  (closed)="showAssignModal.set(false)"
+  (confirmed)="onAssignConfirm($event)"
+/>
+
+<app-delete-screen-modal
+  [isOpen]="showDeleteModal()"
+  [screenName]="selectedScreen()?.name ?? ''"
+  (closed)="showDeleteModal.set(false)"
+  (confirmed)="onDeleteConfirm()"
+/>
