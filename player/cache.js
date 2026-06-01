@@ -22,7 +22,8 @@
 
   async function downloadAndCache({ mediaItemId, filePath, checksum }) {
     const apiUrl = await getApiUrl();
-    const url = `${apiUrl.replace(/\/$/, '')}${filePath}`;
+    const url = `${apiUrl.replace(/\/$/, '')}/${filePath.replace(/^\//, '')}`;
+
 
     const response = await fetch(url);
     if (!response.ok) {
