@@ -39,6 +39,13 @@ public class ErrorHandlingMiddleware
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsync(JsonSerializer.Serialize(new { message = ex.Message }));
         }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning(ex, "Validation failed");
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { message = ex.Message }));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception");

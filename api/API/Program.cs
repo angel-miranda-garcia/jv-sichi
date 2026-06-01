@@ -1,11 +1,15 @@
 using System.Text;
 using Application.Auth;
+using Application.Media;
 using Application.Playlists;
 using Application.Screens;
+using Infrastructure.Storage;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -55,6 +59,21 @@ builder.Services.AddScoped<ReorderPlaylistUseCase>();
 builder.Services.AddScoped<AddMediaToPlaylistUseCase>();
 builder.Services.AddScoped<RemoveMediaFromPlaylistUseCase>();
 builder.Services.AddScoped<AssignPlaylistToScreenUseCase>();
+builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<IMediaRepository, MediaRepository>();
+builder.Services.AddScoped<UploadMediaUseCase>();
+builder.Services.AddScoped<GetMediaUsageUseCase>();
+builder.Services.AddScoped<DeleteMediaUseCase>();
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 52_428_800;
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 52_428_800;
+});
 
 var corsOrigins = (Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -79,6 +98,7 @@ app.UseHttpsRedirection();
 app.UseCors("SichiPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<API.Middleware.UploadRateLimitMiddleware>();
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
