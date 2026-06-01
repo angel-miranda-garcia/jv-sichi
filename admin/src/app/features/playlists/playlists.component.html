@@ -1,0 +1,12 @@
+@if (view() === 'list') {
+  <app-playlist-list
+    (createNew)="onCreateNew()"
+    (edit)="onEdit($event)"
+  />
+}
+@if (view() === 'editor') {
+  <app-playlist-editor
+    [playlistId]="editingPlaylistId()"
+    (back)="onBack()"
+  />
+}

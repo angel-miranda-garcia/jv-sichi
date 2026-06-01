@@ -1,0 +1,92 @@
+@if (isLoading()) {
+  <p class="loading-text">Cargando playlist...</p>
+} @else {
+  <div class="editor-header">
+    <button type="button" class="btn-back" (click)="back.emit()" title="Volver">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+        />
+      </svg>
+    </button>
+    <input
+      class="editor-title-input"
+      type="text"
+      [formControl]="nameControl"
+      placeholder="Nombre de la playlist"
+    />
+    <div class="editor-actions">
+      <button type="button" class="btn-secondary" (click)="back.emit()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="isSaving()"
+        (click)="save()"
+      >
+        {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card panel">
+    <div class="panel-header">
+      <span class="panel-title">Ítems de la lista</span>
+      <button
+        type="button"
+        class="btn-secondary btn--sm"
+        (click)="showMediaSelector.set(true)"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </svg>
+        Agregar Ítem
+      </button>
+    </div>
+
+    <div
+      class="playlist-items"
+      cdkDropList
+      [cdkDropListData]="items()"
+      (cdkDropListDropped)="onDrop($event)"
+    >
+      @for (item of items(); track $index; let i = $index) {
+        <div class="playlist-item" cdkDrag>
+          <span class="drag-handle" cdkDragHandle aria-hidden="true">⠿</span>
+          <div class="item-thumb item-thumb--video">▶</div>
+          <span class="item-name">{{ item.fileName }}</span>
+          <div class="item-duration">
+            <label [attr.for]="'duration-' + i">Segundos:</label>
+            <input
+              [id]="'duration-' + i"
+              type="number"
+              [value]="item.overrideDuration ?? item.duration"
+              (change)="updateDuration(i, $event)"
+              min="1"
+            />
+          </div>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="removeItem(i)"
+            aria-label="Quitar ítem"
+          >
+            ✕
+          </button>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <p>No hay ítems en esta playlist</p>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<app-media-selector-modal
+  [isOpen]="showMediaSelector()"
+  [mediaItems]="availableMedia()"
+  (closed)="showMediaSelector.set(false)"
+  (selected)="onMediaSelected($event)"
+/>
