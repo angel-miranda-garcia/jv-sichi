@@ -914,3 +914,16 @@ Commit: feat(deploy): producción nginx SSL + scripts deploy + backup DB
 
 **Nota .NET 10:** Los seeds de Node 4.1 y 4.2 usan imágenes :8.0 en los Dockerfiles.
 Reemplazar por :10.0 al ejecutar en Cursor.
+
+## 16. Estructura del Repositorio
+
+Monorepo único: `jv-sichi`
+jv-sichi/
+├── api/                -- .NET 10 backend (Clean Architecture)
+├── admin/              -- Angular Admin
+├── player/             -- Player TV (HTML/JS Vanilla)
+├── nginx/              -- nginx.conf + nginx.prod.conf
+├── scripts/            -- deploy.sh, backup-db.sh, setup-ssl.sh
+├── docker-compose.yml
+├── docker-compose.prod.yml
+└── .env.example
