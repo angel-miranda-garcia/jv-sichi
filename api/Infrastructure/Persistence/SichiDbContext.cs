@@ -72,6 +72,7 @@ public class SichiDbContext : DbContext
 
             entity.Property(e => e.Email).HasMaxLength(150);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            entity.Property(e => e.Role).HasMaxLength(50).HasDefaultValue("Admin");
         });
 
         modelBuilder.Entity<AuditLog>(entity =>

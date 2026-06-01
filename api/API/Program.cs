@@ -137,6 +137,7 @@ static async Task SeedAdmin(SichiDbContext db)
     {
         Email = email,
         PasswordHash = PasswordHasher.HashPassword(password),
+        Role = "Admin",
         CreatedAt = DateTime.UtcNow
     });
 
