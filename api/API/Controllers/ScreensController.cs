@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Application.Playlists;
 using Application.Screens;
 using Domain.Exceptions;
 using Domain.Interfaces;
@@ -19,6 +20,7 @@ public class ScreensController : ControllerBase
     private readonly UpdateScreenUseCase _updateScreenUseCase;
     private readonly DeleteScreenUseCase _deleteScreenUseCase;
     private readonly IScreenRepository _screenRepository;
+    private readonly AssignPlaylistToScreenUseCase _assignPlaylistToScreenUseCase;
 
     public ScreensController(
         GetApprovedScreensUseCase getApprovedScreensUseCase,
@@ -27,7 +29,8 @@ public class ScreensController : ControllerBase
         RejectScreenUseCase rejectScreenUseCase,
         UpdateScreenUseCase updateScreenUseCase,
         DeleteScreenUseCase deleteScreenUseCase,
-        IScreenRepository screenRepository)
+        IScreenRepository screenRepository,
+        AssignPlaylistToScreenUseCase assignPlaylistToScreenUseCase)
     {
         _getApprovedScreensUseCase = getApprovedScreensUseCase;
         _getPendingScreensUseCase = getPendingScreensUseCase;
@@ -36,6 +39,7 @@ public class ScreensController : ControllerBase
         _updateScreenUseCase = updateScreenUseCase;
         _deleteScreenUseCase = deleteScreenUseCase;
         _screenRepository = screenRepository;
+        _assignPlaylistToScreenUseCase = assignPlaylistToScreenUseCase;
     }
 
     [HttpGet]
@@ -74,6 +78,14 @@ public class ScreensController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateScreenRequest request) =>
         Ok(await _updateScreenUseCase.ExecuteAsync(id, request.Name));
+
+    [HttpPut("{id:int}/playlist")]
+    public async Task<IActionResult> AssignPlaylist(int id, [FromBody] AssignPlaylistDto dto)
+    {
+        var adminUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await _assignPlaylistToScreenUseCase.ExecuteAsync(id, dto.PlaylistId, adminUserId);
+        return Ok();
+    }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

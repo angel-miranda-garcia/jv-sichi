@@ -1,5 +1,6 @@
 using System.Text;
 using Application.Auth;
+using Application.Playlists;
 using Application.Screens;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -44,6 +45,16 @@ builder.Services.AddScoped<ApproveScreenUseCase>();
 builder.Services.AddScoped<RejectScreenUseCase>();
 builder.Services.AddScoped<UpdateScreenUseCase>();
 builder.Services.AddScoped<DeleteScreenUseCase>();
+builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
+builder.Services.AddScoped<GetPlaylistsUseCase>();
+builder.Services.AddScoped<GetPlaylistDetailUseCase>();
+builder.Services.AddScoped<CreatePlaylistUseCase>();
+builder.Services.AddScoped<UpdatePlaylistUseCase>();
+builder.Services.AddScoped<DeletePlaylistUseCase>();
+builder.Services.AddScoped<ReorderPlaylistUseCase>();
+builder.Services.AddScoped<AddMediaToPlaylistUseCase>();
+builder.Services.AddScoped<RemoveMediaFromPlaylistUseCase>();
+builder.Services.AddScoped<AssignPlaylistToScreenUseCase>();
 
 var corsOrigins = (Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
