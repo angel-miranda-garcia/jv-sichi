@@ -1,6 +1,11 @@
+using System.Text;
+using Application.Auth;
 using Domain.Entities;
+using Domain.Interfaces;
 using Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +17,25 @@ builder.Services.AddDbContext<SichiDbContext>(options =>
         connectionString,
         ServerVersion.AutoDetect(connectionString),
         mysqlOptions => mysqlOptions.MigrationsAssembly(typeof(SichiDbContext).Assembly.GetName().Name)));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")!)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 var corsOrigins = (Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -34,6 +58,8 @@ var app = builder.Build();
 app.UseMiddleware<API.Middleware.ErrorHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("SichiPolicy");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
