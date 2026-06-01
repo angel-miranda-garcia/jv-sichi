@@ -91,6 +91,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddHostedService<HeartbeatMonitor>();
+builder.Services.AddHostedService<MediaCleanup>();
+
 var app = builder.Build();
 
 app.UseMiddleware<API.Middleware.ErrorHandlingMiddleware>();
