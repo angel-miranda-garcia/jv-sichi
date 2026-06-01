@@ -17,14 +17,13 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
-    ?? throw new InvalidOperationException("DB_CONNECTION environment variable is not set.");
-
+var serverVersion = new MySqlServerVersion(new Version(8, 0, 0));
 builder.Services.AddDbContext<SichiDbContext>(options =>
     options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString),
-        mysqlOptions => mysqlOptions.MigrationsAssembly(typeof(SichiDbContext).Assembly.GetName().Name)));
+        Environment.GetEnvironmentVariable("DB_CONNECTION")!,
+        serverVersion
+    )
+);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
