@@ -25,7 +25,8 @@ services:
     volumes:
       - uploads:/app/uploads
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - sichi-net
 
@@ -37,6 +38,13 @@ services:
       - mysql_data:/var/lib/mysql
     expose:
       - "3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - sichi-net
 
