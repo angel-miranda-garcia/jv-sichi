@@ -1,5 +1,6 @@
 using System.Text;
 using Application.Auth;
+using Application.Screens;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Persistence;
@@ -36,6 +37,13 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IScreenRepository, ScreenRepository>();
+builder.Services.AddScoped<GetApprovedScreensUseCase>();
+builder.Services.AddScoped<GetPendingScreensUseCase>();
+builder.Services.AddScoped<ApproveScreenUseCase>();
+builder.Services.AddScoped<RejectScreenUseCase>();
+builder.Services.AddScoped<UpdateScreenUseCase>();
+builder.Services.AddScoped<DeleteScreenUseCase>();
 
 var corsOrigins = (Environment.GetEnvironmentVariable("CORS_ORIGINS") ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Domain.Exceptions;
 
 namespace API.Middleware;
 
@@ -23,6 +24,20 @@ public class ErrorHandlingMiddleware
         try
         {
             await _next(context);
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Resource not found");
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { message = ex.Message }));
+        }
+        catch (ConflictException ex)
+        {
+            _logger.LogWarning(ex, "Conflict");
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { message = ex.Message }));
         }
         catch (Exception ex)
         {
