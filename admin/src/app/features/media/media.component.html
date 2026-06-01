@@ -1,0 +1,101 @@
+<div class="page-header">
+  <h1 class="page-title">Media</h1>
+</div>
+
+<div
+  class="upload-zone"
+  (click)="fileInput.click()"
+  (drop)="onDrop($event)"
+  (dragover)="onDragOver($event)"
+>
+  <input
+    #fileInput
+    type="file"
+    accept=".mp4"
+    hidden
+    (change)="onFileSelected($event)"
+  />
+
+  @if (uploadProgress() === null) {
+    <div class="upload-zone__idle">
+      <div class="upload-zone__icon">↑</div>
+      <p class="upload-zone__text">
+        Haz clic o arrastra archivos multimedia aquí
+      </p>
+      <p class="upload-zone__sub">Solo .mp4 H264 · Máx 50MB</p>
+    </div>
+  } @else {
+    <div class="upload-zone__progress" (click)="$event.stopPropagation()">
+      <p class="upload-progress__name">
+        Subiendo {{ uploadFileName() }}...
+      </p>
+      <div class="progress-bar">
+        <div
+          class="progress-bar__fill"
+          [style.width.%]="uploadProgress()"
+        ></div>
+      </div>
+      <p class="upload-progress__pct">{{ uploadProgress() }}%</p>
+    </div>
+  }
+</div>
+
+<div class="section-title">Biblioteca</div>
+
+@if (isLoading()) {
+  <p class="loading-text">Cargando archivos...</p>
+} @else {
+  <div class="media-grid">
+    @for (item of mediaItems(); track item.id) {
+      <div class="media-card">
+        <div class="media-card__thumb media-card__thumb--video">▶</div>
+        <div class="media-card__body">
+          <p class="media-card__name">{{ item.fileName }}</p>
+          <p class="media-card__meta">
+            Video · {{ formatFileSize(item.fileSize) }}
+            @if (item.durationSeconds > 0) {
+              · {{ formatDuration(item.durationSeconds) }}
+            }
+          </p>
+          <div class="media-card__actions">
+            <button
+              type="button"
+              class="btn-secondary btn--sm"
+              (click)="openUsageModal(item); $event.stopPropagation()"
+            >
+              Ver uso
+            </button>
+            <button
+              type="button"
+              class="btn-danger btn--sm btn-icon-only"
+              (click)="openDeleteModal(item); $event.stopPropagation()"
+              title="Eliminar"
+            >
+              🗑
+            </button>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">
+        <p>No hay archivos en la biblioteca</p>
+      </div>
+    }
+  </div>
+}
+
+<app-media-usage-modal
+  [isOpen]="showUsageModal()"
+  [fileName]="selectedItem()?.fileName ?? ''"
+  [usage]="selectedItemUsage()"
+  [isLoading]="isLoadingUsage()"
+  (closed)="showUsageModal.set(false)"
+/>
+
+<app-delete-media-modal
+  [isOpen]="showDeleteModal()"
+  [fileName]="selectedItem()?.fileName ?? ''"
+  [usage]="selectedItemUsage()"
+  (closed)="showDeleteModal.set(false)"
+  (confirmed)="onDeleteConfirm()"
+/>

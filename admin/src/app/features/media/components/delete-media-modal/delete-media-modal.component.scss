@@ -1,0 +1,37 @@
+.delete-warning {
+  background: #ffebee;
+  border-left: 4px solid var(--status-offline);
+  padding: 12px 16px;
+  border-radius: var(--border-radius);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  strong {
+    color: var(--status-offline);
+    font-size: 14px;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--sichi-black);
+    line-height: 1.4;
+  }
+}
+
+.delete-confirm {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.btn-danger-confirm {
+  background: var(--status-offline);
+  border: none;
+  color: white;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}

@@ -1,0 +1,34 @@
+<app-modal-base
+  title="Eliminar Archivo"
+  [isOpen]="isOpen()"
+  (closed)="closed.emit()"
+>
+  <div modal-body>
+    @if (usage().length > 0) {
+      <div class="delete-warning">
+        <strong>⚠ Este archivo está en uso</strong>
+        <p>
+          Está siendo utilizado en {{ usage().length }} playlist(s).
+          Eliminarlo puede afectar la reproducción.
+        </p>
+      </div>
+    }
+    <p class="delete-confirm">
+      ¿Estás seguro de que deseas eliminar
+      <strong>{{ fileName() }}</strong>? Esta acción no se puede deshacer.
+    </p>
+  </div>
+
+  <div modal-footer>
+    <button type="button" class="btn-secondary" (click)="closed.emit()">
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn-primary btn-danger-confirm"
+      (click)="confirmed.emit()"
+    >
+      Sí, eliminar
+    </button>
+  </div>
+</app-modal-base>
