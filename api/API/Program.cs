@@ -1,6 +1,7 @@
 using System.Text;
 using Application.Auth;
 using Application.Media;
+using Application.Player;
 using Application.Playlists;
 using Application.Screens;
 using Infrastructure.Storage;
@@ -95,6 +96,10 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IRealtimeService, RealtimeService>();
 builder.Services.AddScoped<ForceRefreshUseCase>();
+builder.Services.AddScoped<RegisterScreenUseCase>();
+builder.Services.AddScoped<SyncPlaylistUseCase>();
+builder.Services.AddScoped<GetPlayerVersionUseCase>();
+builder.Services.AddScoped<PlayerHeartbeatUseCase>();
 
 builder.Services.AddHostedService<HeartbeatMonitor>();
 builder.Services.AddHostedService<MediaCleanup>();

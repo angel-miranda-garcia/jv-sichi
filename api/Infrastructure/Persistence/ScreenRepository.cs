@@ -31,6 +31,7 @@ public class ScreenRepository : IScreenRepository
 
     public async Task<Screen?> GetByScreenKeyAsync(string screenKey) =>
         await _db.Screens
+            .Include(s => s.CurrentPlaylist)
             .FirstOrDefaultAsync(s => s.ScreenKey == screenKey);
 
     public async Task AddAsync(Screen screen)
