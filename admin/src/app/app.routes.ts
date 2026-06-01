@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard } from './core/auth/auth.guard';
+import { AuthGuard } from './core/auth/auth.guard';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { HistoryComponent } from './features/history/history.component';
 import { LoginComponent } from './features/login/login.component';
@@ -14,7 +14,7 @@ export const routes: Routes = [
   {
     path: '',
     component: SidebarComponent,
-    canActivate: [authGuard],
+    canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },

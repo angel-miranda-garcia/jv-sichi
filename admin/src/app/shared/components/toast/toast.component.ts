@@ -1,10 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
-/** Toast — implementación completa en 4.6-b */
+import { ToastService } from './toast.service';
+
 @Component({
   selector: 'app-toast',
   standalone: true,
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.scss',
 })
-export class ToastComponent {}
+export class ToastComponent {
+  readonly toastService = inject(ToastService);
+  readonly toasts = this.toastService.toasts$;
+}

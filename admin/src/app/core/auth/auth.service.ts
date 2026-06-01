@@ -1,50 +1,109 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { Observable, map, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
-const TOKEN_KEY = 'sichi_admin_token';
-
-export interface LoginRequest {
-  email: string;
-  password: string;
+interface LoginResponse {
+  token: string;
 }
 
-export interface LoginResponse {
-  token: string;
+interface JwtPayload {
+  sub?: string;
+  email?: string;
+  exp?: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly token = signal<string | null>(this.readToken());
+  private readonly router = inject(Router);
 
-  login(credentials: LoginRequest): Observable<LoginResponse> {
+  private token: string | null = null;
+  private readonly TOKEN_KEY = 'sichi_jwt';
+
+  login(email: string, password: string): Observable<void> {
     return this.http
-      .post<LoginResponse>(`${environment.apiUrl}/api/auth/login`, credentials)
+      .post<LoginResponse>(`${environment.apiUrl}/api/auth/login`, {
+        email,
+        password,
+      })
       .pipe(
         tap((response) => {
-          localStorage.setItem(TOKEN_KEY, response.token);
-          this.token.set(response.token);
-        })
+          this.token = response.token;
+        }),
+        map(() => void 0)
       );
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this.token.set(null);
+    this.token = null;
+    void this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
-    return this.token();
+    return this.token;
   }
 
   isAuthenticated(): boolean {
-    return !!this.token();
+    if (this.token === null) {
+      return false;
+    }
+
+    const payload = this.decodePayload();
+    if (!payload?.exp) {
+      this.token = null;
+      return false;
+    }
+
+    if (payload.exp <= Date.now() / 1000) {
+      this.token = null;
+      return false;
+    }
+
+    return true;
   }
 
-  private readToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+  getUserId(): number | null {
+    if (!this.token) {
+      return null;
+    }
+
+    const payload = this.decodePayload();
+    if (!payload?.sub) {
+      return null;
+    }
+
+    const id = parseInt(payload.sub, 10);
+    return Number.isNaN(id) ? null : id;
+  }
+
+  getUserEmail(): string | null {
+    if (!this.token) {
+      return null;
+    }
+
+    const payload = this.decodePayload();
+    return payload?.email ?? null;
+  }
+
+  private decodePayload(): JwtPayload | null {
+    if (!this.token) {
+      return null;
+    }
+
+    const parts = this.token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+
+    try {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const json = atob(base64);
+      return JSON.parse(json) as JwtPayload;
+    } catch {
+      return null;
+    }
   }
 }

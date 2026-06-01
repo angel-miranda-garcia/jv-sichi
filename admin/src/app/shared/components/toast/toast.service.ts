@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error';
 
-export interface ToastMessage {
+export interface Toast {
   id: number;
   message: string;
   type: ToastType;
@@ -10,15 +10,17 @@ export interface ToastMessage {
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
-  private nextId = 0;
-  readonly messages = signal<ToastMessage[]>([]);
+  private readonly toasts = signal<Toast[]>([]);
+  readonly toasts$ = this.toasts.asReadonly();
+  private counter = 0;
 
-  show(message: string, type: ToastType = 'info'): void {
-    const id = ++this.nextId;
-    this.messages.update((list) => [...list, { id, message, type }]);
+  show(message: string, type: ToastType = 'success'): void {
+    const id = ++this.counter;
+    this.toasts.update((t) => [...t, { id, message, type }]);
+    setTimeout(() => this.dismiss(id), 3000);
   }
 
   dismiss(id: number): void {
-    this.messages.update((list) => list.filter((t) => t.id !== id));
+    this.toasts.update((t) => t.filter((x) => x.id !== id));
   }
 }
