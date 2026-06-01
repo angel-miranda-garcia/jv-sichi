@@ -1,0 +1,34 @@
+<app-modal-base
+  title="Uso en Playlists"
+  [isOpen]="isOpen()"
+  (closed)="closed.emit()"
+>
+  <div modal-body>
+    @if (isLoading()) {
+      <p class="loading-text">Cargando...</p>
+    } @else if (usage().length === 0) {
+      <p class="usage-empty">
+        No se está utilizando en ninguna playlist
+      </p>
+    } @else {
+      <p class="usage-intro">
+        El archivo <strong>{{ fileName() }}</strong> se encuentra en las
+        siguientes playlists:
+      </p>
+      <ul class="usage-list">
+        @for (item of usage(); track item.playlistId) {
+          <li class="usage-list__item">
+            <span class="usage-list__icon">▶</span>
+            {{ item.playlistName }}
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div modal-footer>
+    <button type="button" class="btn-secondary" (click)="closed.emit()">
+      Cerrar
+    </button>
+  </div>
+</app-modal-base>

@@ -1,0 +1,53 @@
+<div class="app-layout" [class.collapsed]="isCollapsed()">
+  <aside class="sidebar">
+    <div class="sidebar__header">
+      <span class="sidebar__logo">SICHI</span>
+      <button
+        type="button"
+        class="sidebar__toggle"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="isCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
+      >
+        {{ isCollapsed() ? '→' : '←' }}
+      </button>
+    </div>
+
+    <nav class="sidebar__nav">
+      @for (item of navItems; track item.path) {
+        <a
+          class="sidebar__item"
+          [routerLink]="item.path"
+          routerLinkActive="sidebar__item--active"
+        >
+          <span class="sidebar__icon">{{ item.icon }}</span>
+          @if (!isCollapsed()) {
+            <span class="sidebar__label">{{ item.label }}</span>
+          }
+          @if (item.badge && pendingCount() > 0) {
+            <span class="sidebar__badge">{{ pendingCount() }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar__footer">
+      @if (!isCollapsed()) {
+        <span class="sidebar__user">{{ authService.getUserEmail() }}</span>
+      }
+      <button
+        type="button"
+        class="sidebar__logout"
+        (click)="logout()"
+        title="Cerrar sesión"
+      >
+        ⏻
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>
+
+<app-toast />

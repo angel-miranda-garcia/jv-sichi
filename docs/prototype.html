@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sichi Digital Signage - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sichi-red: #E53935;
+            --sichi-black: #121212;
+            --sichi-gray: #F5F5F5;
+            --text-muted: #666666;
+            --border-color: #E0E0E0;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 80px;
+            --border-radius: 4px;
+            --status-online: #4CAF50;
+            --status-offline: #F44336;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--sichi-gray); color: var(--sichi-black); height: 100vh; display: flex; overflow: hidden; }
+
+        /* --- Utilidades --- */
+        .view { display: none; width: 100%; height: 100%; }
+        .view.active { display: flex; }
+        .subview { display: none; flex-direction: column; gap: 32px; }
+        .subview.active { display: flex; }
+        .hidden { display: none !important; }
+        
+        svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
+        .icon-btn { background: none; border: none; cursor: pointer; color: inherit; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: var(--border-radius); transition: 0.2s; }
+        .icon-btn:hover { background: rgba(0,0,0,0.05); }
+
+        /* --- Botones e Inputs --- */
+        .btn { padding: 10px 16px; border: none; border-radius: var(--border-radius); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+        .btn-primary { background-color: var(--sichi-red); color: #ffffff; }
+        .btn-primary:hover { background-color: #C62828; }
+        .btn-secondary { background-color: var(--sichi-gray); color: var(--sichi-black); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #E0E0E0; }
+        .btn-action { padding: 6px 12px; font-size: 0.75rem; border: 1px solid var(--border-color); background: #ffffff; color: var(--sichi-black); }
+        .btn-action:hover { background: var(--sichi-gray); }
+        .btn-danger { background-color: #ffffff; color: var(--sichi-red); border: 1px solid var(--border-color); }
+        .btn-danger:hover { background-color: #FFEBEE; border-color: var(--sichi-red); }
+        .btn-icon-only { padding: 8px; }
+
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
+        .form-control { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 1rem; background-color: var(--sichi-gray); transition: all 0.2s ease; }
+        .form-control:focus { outline: none; border-color: var(--sichi-black); background-color: #ffffff; }
+
+        /* --- Login --- */
+        #view-login { background-color: var(--sichi-black); align-items: center; justify-content: center; }
+        .login-container { background-color: #ffffff; width: 100%; max-width: 380px; padding: 48px 40px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .brand-header { text-align: center; margin-bottom: 40px; }
+        .brand-header h1 { color: var(--sichi-red); font-weight: 800; font-size: 2.5rem; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1; }
+        .brand-header p { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-top: 8px; letter-spacing: 0.5px; }
+        .error-message { color: var(--sichi-red); font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 16px; display: none; padding: 8px; background-color: #FFEBEE; border-radius: var(--border-radius); }
+
+        /* --- Layout Principal --- */
+        #view-app { flex-direction: row; position: relative; }
+        
+        .sidebar { width: var(--sidebar-width); background-color: var(--sichi-black); color: #ffffff; display: flex; flex-direction: column; justify-content: space-between; padding: 24px 0; flex-shrink: 0; transition: width 0.3s ease; }
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); }
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; margin-bottom: 40px; }
+        .sidebar-brand h2 { color: var(--sichi-red); font-weight: 800; font-size: 1.8rem; letter-spacing: -1px; text-transform: uppercase; white-space: nowrap; }
+        .sidebar-brand p { color: #888888; font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; white-space: nowrap; }
+        .sidebar.collapsed .sidebar-brand { display: none; }
+        .sidebar.collapsed .sidebar-header { justify-content: center; padding: 0; }
+        .toggle-sidebar-btn { color: #fff; }
+        .toggle-sidebar-btn:hover { background: rgba(255,255,255,0.1); }
+        
+        .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item a { display: flex; align-items: center; gap: 16px; padding: 14px 24px; color: #AAAAAA; text-decoration: none; font-size: 0.9rem; font-weight: 600; border-left: 4px solid transparent; white-space: nowrap; transition: background 0.2s, color 0.2s; }
+        .nav-item a:hover, .nav-item.active a { color: #ffffff; background-color: rgba(255, 255, 255, 0.05); }
+        .nav-item.active a { border-left-color: var(--sichi-red); background-color: rgba(229, 57, 53, 0.1); }
+        .nav-item .nav-text { transition: opacity 0.2s; }
+        .sidebar.collapsed .nav-item a { justify-content: center; padding: 14px 0; }
+        .sidebar.collapsed .nav-item .nav-text { display: none; }
+        .sidebar.collapsed .nav-item.active a { border-left-color: transparent; border-bottom: 2px solid var(--sichi-red); }
+        
+        .sidebar-footer { padding: 0 24px; font-size: 0.8rem; color: #666666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar.collapsed .sidebar-footer { text-align: center; padding: 0; font-size: 0.6rem; }
+
+        .main-content { flex-grow: 1; background-color: var(--sichi-gray); overflow-y: auto; padding: 40px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; border-bottom: 2px solid var(--sichi-black); padding-bottom: 16px; }
+        .page-header h2 { font-size: 1.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: -0.5px; display: flex; align-items: center; gap: 16px; }
+        .user-status { font-size: 0.85rem; font-weight: 600; background-color: #ffffff; padding: 8px 16px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+
+        /* --- Componentes Comunes --- */
+        .panel { background-color: #ffffff; border-radius: var(--border-radius); border: 1px solid var(--border-color); padding: 24px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .panel-title { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--sichi-red); padding-left: 10px; }
+        
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-table th { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; border-bottom: 2px solid var(--sichi-black); font-weight: 700; }
+        .data-table td { padding: 14px 16px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        
+        .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 2px; }
+        .badge-online { background-color: #E8F5E9; color: var(--status-online); }
+        .badge-offline { background-color: #FFEBEE; color: var(--status-offline); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .badge-online .status-dot { background-color: var(--status-online); }
+        .badge-offline .status-dot { background-color: var(--status-offline); }
+
+        /* --- Toasts Globales --- */
+        #toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
+        .toast { background: var(--sichi-black); color: #fff; padding: 16px 24px; border-radius: var(--border-radius); box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; font-size: 0.9rem; font-weight: 500; min-width: 280px; transform: translateX(120%); transition: transform 0.3s ease; }
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 4px solid var(--status-online); }
+        .toast.error { border-left: 4px solid var(--status-offline); }
+        
+        /* --- Modales --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-container { background: #ffffff; width: 100%; max-width: 450px; border-radius: var(--border-radius); box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative; max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-header { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; padding: 24px 32px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-close { cursor: pointer; color: var(--text-muted); padding: 4px; border: none; background: transparent; }
+        .modal-close:hover { color: var(--sichi-black); }
+        .modal-body { padding: 0 32px 24px; overflow-y: auto; }
+        .modal-body p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 32px; background: var(--sichi-gray); border-top: 1px solid var(--border-color); border-radius: 0 0 var(--border-radius) var(--border-radius); flex-shrink: 0; }
+
+        /* --- Dashboard Specifics --- */
+        .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .metric-card { background-color: #ffffff; padding: 24px; border-radius: var(--border-radius); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .metric-card .label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+        .metric-card .value { font-size: 2.5rem; font-weight: 700; color: var(--sichi-black); line-height: 1; }
+
+        /* --- Playlists Specifics --- */
+        .playlist-edit-header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px 24px; border-radius: var(--border-radius); border: 1px solid var(--border-color); margin-bottom: 24px; }
+        .playlist-name-input { font-size: 1.2rem; font-weight: 700; border: none; border-bottom: 2px solid var(--border-color); padding: 8px 0; width: 300px; background: transparent; outline: none; }
+        .playlist-name-input:focus { border-bottom-color: var(--sichi-black); }
+        .playlist-items { display: flex; flex-direction: column; gap: 8px; }
+        .playlist-item { background: #fff; border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 12px 16px; display: flex; align-items: center; gap: 16px; }
+        .drag-handle { cursor: grab; color: #ccc; display: flex; flex-direction: column; gap: 2px; }
+        .drag-handle::before, .drag-handle::after { content: '⋮⋮'; font-size: 14px; line-height: 10px; font-weight: bold; }
+        .pl-thumb { width: 60px; height: 40px; background: #ddd; border-radius: 2px; object-fit: cover; }
+        .pl-info { flex-grow: 1; display: flex; flex-direction: column; }
+        .pl-title { font-weight: 600; font-size: 0.95rem; }
+        .pl-meta { font-size: 0.75rem; color: var(--text-muted); }
+        .pl-duration { width: 70px; padding: 6px; text-align: center; border: 1px solid var(--border-color); border-radius: 2px; font-size: 0.85rem; }
+
+        /* --- Media Specifics --- */
+        .upload-zone { border: 2px dashed var(--border-color); border-radius: var(--border-radius); padding: 40px; text-align: center; background-color: #fafafa; transition: 0.2s; cursor: pointer; margin-bottom: 24px; }
+        .upload-zone:hover { border-color: var(--sichi-black); background-color: #f0f0f0; }
+        .upload-icon { color: var(--text-muted); margin-bottom: 12px; width: 40px; height: 40px; }
+        .progress-mock { margin-top: 16px; display: none; }
+        .progress-bar-bg { background: #E0E0E0; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { background: var(--sichi-red); width: 45%; height: 100%; transition: width 0.3s; }
+        
+        .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .media-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; display: flex; flex-direction: column; }
+        .media-thumb { height: 120px; width: 100%; background: #ddd; object-fit: cover; }
+        .media-body { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; }
+        .media-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; word-break: break-all; }
+        .media-details { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px; }
+        .media-actions { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: auto; }
+
+        /* --- Historial Specifics --- */
+        .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--border-color); }
+        .pagination-info { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+        .pagination-controls { display: flex; gap: 8px; }
+        .page-btn { padding: 6px 12px; border: 1px solid var(--border-color); background: #fff; border-radius: 2px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+        .page-btn:hover:not(:disabled) { background: var(--sichi-gray); }
+        .page-btn.active { background: var(--sichi-black); color: #fff; border-color: var(--sichi-black); }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div id="view-login" class="view active">
+        <div class="login-container">
+            <div class="brand-header">
+                <h1>Sichi</h1>
+                <p>DIGITAL SIGNAGE</p>
+            </div>
+            <form id="form-login">
+                <div class="form-group">
+                    <label>Usuario</label>
+                    <input type="text" id="input-user" class="form-control" placeholder="Ej. admin" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="input-pass" class="form-control" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; padding:14px;">Ingresar</button>
+                <div id="login-error" class="error-message">Credenciales inválidas. Usa admin / admin.</div>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-app" class="view">
+        <aside class="sidebar" id="main-sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <div class="sidebar-brand">
+                        <h2>Sichi</h2>
+                        <p>DIGITAL SIGNAGE</p>
+                    </div>
+                    <button class="icon-btn toggle-sidebar-btn" id="toggle-sidebar" title="Ocultar menú">
+                        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                    </button>
+                </div>
+                <nav>
+                    <ul class="nav-menu">
+                        <li class="nav-item active" data-target="dashboard">
+                            <a href="#">
+                                <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                                <span class="nav-text">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-target="screens">
+                            <a href="#">
+                                <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg>
+                                <span class="nav-text">Pantallas</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-target="playlists">
+                            <a href="#">
+                                <svg viewBox="0 0 24 24"><path d="M4 10h12v2H4zm0-4h12v2H4zm0 8h8v2H4zm10 0v6l5-3z"/></svg>
+                                <span class="nav-text">Playlists</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-target="media">
+                            <a href="#">
+                                <svg viewBox="0 0 24 24"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+                                <span class="nav-text">Media</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" data-target="history">
+                            <a href="#">
+                                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                                <span class="nav-text">Historial</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="sidebar-footer">v1.0.0 Prototipo</div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h2 id="page-title">Dashboard</h2>
+                <div class="user-status">Admin activo</div>
+            </div>
+
+            <div id="subview-dashboard" class="subview active">
+                <div class="metrics-grid">
+                    <div class="metric-card"><span class="label">Total Pantallas</span><span class="value">4</span></div>
+                    <div class="metric-card"><span class="label">Online</span><span class="value" style="color: var(--status-online)">3</span></div>
+                    <div class="metric-card"><span class="label">Offline</span><span class="value" style="color: var(--status-offline)">1</span></div>
+                </div>
+                <div class="panel">
+                    <h3 class="panel-title">Monitoreo en vivo</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Ubicación</th><th>Estado</th><th>Playlist Activa</th><th>Último Ping</th><th>Acción Rápida</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Menú Principal 1</strong></td>
+                                <td><span class="badge badge-online"><span class="status-dot"></span>Online</span></td>
+                                <td>Promociones Mayo</td>
+                                <td>Hace 12 seg</td>
+                                <td><button class="btn btn-action" onclick="showToast('Refresh forzado en Menú Principal 1', 'success')">Forzar Refresh</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Terraza Exterior</strong></td>
+                                <td><span class="badge badge-offline"><span class="status-dot"></span>Offline</span></td>
+                                <td>Especiales Fin de Semana</td>
+                                <td>Hace 2 horas</td>
+                                <td><button class="btn btn-action" disabled style="opacity:0.5;cursor:not-allowed;">Forzar Refresh</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="subview-screens" class="subview">
+                <div class="panel">
+                    <h3 class="panel-title">Inventario de Dispositivos</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Pantalla / Ubicación</th><th>Estado</th><th>Playlist Asignada</th><th>Último Ping</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Menú Principal 1</strong><br><small style="color:var(--text-muted)">MAC: 00:1A:2B:3C:4D:5E</small></td>
+                                <td><span class="badge badge-online"><span class="status-dot"></span>Online</span></td>
+                                <td>Promociones Mayo</td>
+                                <td>Hace 12 seg</td>
+                                <td>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn btn-action" onclick="openModal('modal-playlist', 'Menú Principal 1')">Asignar Playlist</button>
+                                        <button class="btn btn-action" onclick="showToast('Refresh forzado enviado correctamente.', 'success')">Forzar Refresh</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="subview-playlists" class="subview">
+                <div id="playlists-list-view">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Playlists Registradas</h3>
+                            <button class="btn btn-primary" onclick="togglePlaylistView('edit', 'Nueva Playlist')">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Crear Playlist
+                            </button>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Nombre</th><th>Ítems</th><th>Duración Total</th><th>Modificación</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Promociones Mayo</strong></td><td>5</td><td>00:01:15</td><td>Hoy, 10:30</td>
+                                    <td>
+                                        <button class="btn btn-action" onclick="togglePlaylistView('edit', 'Promociones Mayo')">Editar</button>
+                                        <button class="btn btn-action btn-danger" onclick="showToast('Playlist eliminada.', 'success')">Eliminar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="playlists-edit-view" class="hidden">
+                    <div class="playlist-edit-header">
+                        <div style="display:flex; align-items:center; gap: 16px;">
+                            <button class="btn-action" style="padding: 8px;" onclick="togglePlaylistView('list')" title="Volver">
+                                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                            </button>
+                            <input type="text" id="pl-edit-name" class="playlist-name-input" value="Nueva Playlist">
+                        </div>
+                        <div style="display:flex; gap: 12px;">
+                            <button class="btn btn-secondary" onclick="togglePlaylistView('list')">Cancelar</button>
+                            <button class="btn btn-primary" onclick="showToast('Playlist guardada correctamente.', 'success'); togglePlaylistView('list');">Guardar Playlist</button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Ítems de la lista</h3>
+                            <button class="btn btn-secondary" onclick="showToast('Mock: Abrir selector de media', 'success')">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Agregar Ítem
+                            </button>
+                        </div>
+                        <div class="playlist-items">
+                            <div class="playlist-item">
+                                <div class="drag-handle"></div>
+                                <img src="https://via.placeholder.com/60x40/E53935/ffffff?text=Video" class="pl-thumb" alt="thumb">
+                                <div class="pl-info">
+                                    <span class="pl-title">promo_2x1_sushi.mp4</span>
+                                    <span class="pl-meta">Video • 15 MB</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap: 8px;">
+                                    <span style="font-size:0.8rem; font-weight:600;">Segundos:</span>
+                                    <input type="number" class="pl-duration" value="15">
+                                </div>
+                                <button class="btn-action btn-danger btn-icon-only" onclick="this.parentElement.remove()">
+                                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subview-media" class="subview">
+                <div class="panel">
+                    <h3 class="panel-title" style="margin-bottom: 24px;">Subir Archivos</h3>
+                    <div class="upload-zone" onclick="document.getElementById('mock-progress').style.display='block'; setTimeout(()=>showToast('Archivo subido mock', 'success'), 1500)">
+                        <svg class="upload-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.36 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                        <p style="font-weight: 600; color: var(--sichi-black);">Haz clic o arrastra archivos multimedia aquí</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Soporta JPG, PNG, MP4 (Máx 50MB)</p>
+                        
+                        <div id="mock-progress" class="progress-mock">
+                            <p style="font-size: 0.8rem; font-weight: 600; text-align: left;">Subiendo banner_nuevo.jpg (45%)</p>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="panel-header">
+                        <h3 class="panel-title">Biblioteca Multimedia</h3>
+                    </div>
+                    
+                    <div class="media-grid">
+                        <div class="media-card">
+                            <img src="https://via.placeholder.com/300x160/E53935/ffffff?text=Video" class="media-thumb" alt="thumb">
+                            <div class="media-body">
+                                <div class="media-title">promo_2x1_sushi.mp4</div>
+                                <div class="media-details">Video • 15 MB • 00:15</div>
+                                <div class="media-actions">
+                                    <button class="btn btn-action" onclick="openModal('modal-media-usage', 'promo_2x1_sushi.mp4', true)">Ver uso (2)</button>
+                                    <button class="btn btn-action btn-danger btn-icon-only" onclick="openModal('modal-delete-media', 'promo_2x1_sushi.mp4', true)">
+                                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="media-card">
+                            <img src="https://via.placeholder.com/300x160/121212/ffffff?text=Imagen" class="media-thumb" alt="thumb">
+                            <div class="media-body">
+                                <div class="media-title">menu_bebidas.jpg</div>
+                                <div class="media-details">Imagen • 2 MB • N/A</div>
+                                <div class="media-actions">
+                                    <button class="btn btn-action" onclick="openModal('modal-media-usage', 'menu_bebidas.jpg', false)">Ver uso (0)</button>
+                                    <button class="btn btn-action btn-danger btn-icon-only" onclick="openModal('modal-delete-media', 'menu_bebidas.jpg', false)">
+                                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subview-history" class="subview">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">AuditLog</h3>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="form-group" style="margin-bottom: 0; width: 250px;">
+                            <select class="form-control" style="padding: 8px 12px; font-size: 0.9rem;">
+                                <option>Todas las acciones</option>
+                                <option>Creación</option>
+                                <option>Actualización</option>
+                                <option>Eliminación</option>
+                                <option>Sistema</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Fecha / Hora</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Detalle</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>31 May 2026, 20:34</td><td>admin</td><td>Actualización</td><td>Playlist</td>
+                                <td>Se editó la playlist "Promociones Mayo".</td>
+                            </tr>
+                            <tr>
+                                <td>31 May 2026, 19:15</td><td>admin</td><td>Creación</td><td>Media</td>
+                                <td>Se subió el archivo "promo_2x1_sushi.mp4".</td>
+                            </tr>
+                            <tr>
+                                <td>30 May 2026, 23:10</td><td>admin</td><td>Sistema</td><td>Pantalla</td>
+                                <td>Se forzó el refresh en "Menú Principal 1".</td>
+                            </tr>
+                            <tr>
+                                <td>29 May 2026, 14:05</td><td>admin</td><td>Eliminación</td><td>Media</td>
+                                <td>Se eliminó el archivo "viejo_banner.jpg".</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pagination">
+                        <span class="pagination-info">Mostrando 1 - 4 de 45 registros</span>
+                        <div class="pagination-controls">
+                            <button class="page-btn" disabled>Anterior</button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn">2</button>
+                            <button class="page-btn">3</button>
+                            <button class="page-btn">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="modal-playlist" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                Asignar Playlist
+                <button class="modal-close" onclick="closeModal('modal-playlist')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            </div>
+            <div class="modal-body">
+                <p>Selecciona la playlist para <strong id="modal-pl-screen-name"></strong>.</p>
+                <div class="form-group">
+                    <label>Playlist</label>
+                    <select class="form-control">
+                        <option>Promociones Mayo</option>
+                        <option>Clásicos Sichi</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('modal-playlist')">Cancelar</button>
+                <button class="btn btn-primary" onclick="showToast('Playlist asignada correctamente', 'success'); closeModal('modal-playlist');">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-delete-media" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                Eliminar Archivo
+                <button class="modal-close" onclick="closeModal('modal-delete-media')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro que deseas eliminar el archivo <strong id="modal-del-media-name"></strong>?</p>
+                <div id="modal-del-warning" style="display:none; padding: 12px; background: #FFEBEE; color: var(--sichi-red); border-left: 4px solid var(--sichi-red); font-size: 0.85rem; font-weight: 600; border-radius: 2px;">
+                    Advertencia: Este archivo está en uso en una o más playlists. Eliminarlo lo removerá inmediatamente de la reproducción.
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('modal-delete-media')">Cancelar</button>
+                <button class="btn btn-danger" onclick="showToast('Archivo eliminado correctamente', 'success'); closeModal('modal-delete-media');">Sí, Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-media-usage" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                Uso en Playlists
+                <button class="modal-close" onclick="closeModal('modal-media-usage')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            </div>
+            <div class="modal-body">
+                <p>El archivo <strong id="modal-use-media-name"></strong> se encuentra en las siguientes playlists:</p>
+                <ul id="modal-use-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+                    </ul>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('modal-media-usage')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Login ---
+        document.getElementById('form-login').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('input-user').value;
+            const pass = document.getElementById('input-pass').value;
+            if (user === 'admin' && pass === 'admin') {
+                document.getElementById('login-error').style.display = 'none';
+                document.getElementById('view-login').classList.remove('active');
+                document.getElementById('view-app').classList.add('active');
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        });
+
+        // --- Sidebar Toggle ---
+        const sidebar = document.getElementById('main-sidebar');
+        document.getElementById('toggle-sidebar').addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        // --- Navegación ---
+        const navItems = document.querySelectorAll('.nav-item');
+        const subviews = document.querySelectorAll('.subview');
+        const pageTitle = document.getElementById('page-title');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = item.getAttribute('data-target');
+                navItems.forEach(i => i.classList.remove('active'));
+                subviews.forEach(v => v.classList.remove('active'));
+                item.classList.add('active');
+                document.getElementById(`subview-${target}`).classList.add('active');
+                
+                const linkText = item.querySelector('.nav-text').textContent;
+                if (target === 'dashboard') {
+                    pageTitle.innerHTML = 'Dashboard';
+                } else {
+                    pageTitle.innerHTML = `<svg viewBox="0 0 24 24" style="color:var(--sichi-red); width:24px; height:24px;">${item.querySelector('svg').innerHTML}</svg> ${linkText}`;
+                }
+
+                if (target === 'playlists') togglePlaylistView('list');
+            });
+        });
+
+        // --- Playlists Sub-navigation ---
+        function togglePlaylistView(view, playlistName = '') {
+            const list = document.getElementById('playlists-list-view');
+            const edit = document.getElementById('playlists-edit-view');
+            if (view === 'edit') {
+                list.classList.add('hidden');
+                edit.classList.remove('hidden');
+                document.getElementById('pl-edit-name').value = playlistName;
+            } else {
+                edit.classList.add('hidden');
+                list.classList.remove('hidden');
+            }
+        }
+
+        // --- Toasts ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const iconSvg = type === 'success' 
+                ? '<svg viewBox="0 0 24 24" style="color:var(--status-online)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' 
+                : '<svg viewBox="0 0 24 24" style="color:var(--status-offline)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+            toast.innerHTML = `${iconSvg} <span>${message}</span>`;
+            container.appendChild(toast);
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Modales ---
+        function openModal(modalId, param1, param2) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('active');
+            
+            if(modalId === 'modal-playlist' && param1) {
+                document.getElementById('modal-pl-screen-name').textContent = param1;
+            } 
+            else if (modalId === 'modal-delete-media') {
+                document.getElementById('modal-del-media-name').textContent = param1;
+                document.getElementById('modal-del-warning').style.display = param2 ? 'block' : 'none';
+            }
+            else if (modalId === 'modal-media-usage') {
+                document.getElementById('modal-use-media-name').textContent = param1;
+                const ul = document.getElementById('modal-use-list');
+                ul.innerHTML = '';
+                if(param2) {
+                    ul.innerHTML = `
+                        <li style="padding: 8px 12px; background: var(--sichi-gray); border: 1px solid var(--border-color); border-radius: 2px;">Promociones Mayo</li>
+                        <li style="padding: 8px 12px; background: var(--sichi-gray); border: 1px solid var(--border-color); border-radius: 2px;">Clásicos Sichi</li>
+                    `;
+                } else {
+                    ul.innerHTML = `<li style="color: var(--text-muted); font-style: italic;">No se está utilizando en ninguna playlist.</li>`;
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

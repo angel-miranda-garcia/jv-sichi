@@ -1,0 +1,29 @@
+<app-modal-base
+  title="Asignar Playlist"
+  [isOpen]="isOpen()"
+  (closed)="closed.emit()"
+>
+  <div modal-body>
+    <div class="form-field">
+      <label for="playlist-select">Selecciona una playlist</label>
+      <select
+        id="playlist-select"
+        [(ngModel)]="selectedPlaylistIdValue"
+      >
+        <option [ngValue]="null">— Sin playlist —</option>
+        @for (pl of playlists(); track pl.id) {
+          <option [ngValue]="pl.id">{{ pl.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div modal-footer>
+    <button type="button" class="btn-secondary" (click)="closed.emit()">
+      Cancelar
+    </button>
+    <button type="button" class="btn-primary" (click)="onConfirm()">
+      Confirmar
+    </button>
+  </div>
+</app-modal-base>

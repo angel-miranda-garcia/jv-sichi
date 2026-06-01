@@ -1,0 +1,66 @@
+<div class="page-header">
+  <h1 class="page-title">Playlists</h1>
+  <button type="button" class="btn-primary" (click)="createNew.emit()">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+    </svg>
+    Crear Playlist
+  </button>
+</div>
+
+<div class="card panel">
+  @if (isLoading()) {
+    <p class="loading-text">Cargando playlists...</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Ítems</th>
+          <th>Duración Total</th>
+          <th>Última Modificación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (playlist of playlists(); track playlist.id) {
+          <tr>
+            <td><strong>{{ playlist.name }}</strong></td>
+            <td>{{ playlist.itemCount }}</td>
+            <td>{{ playlist.totalDuration }}</td>
+            <td>{{ playlist.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <div class="row-actions">
+                <button
+                  type="button"
+                  class="btn-action"
+                  (click)="edit.emit(playlist.id)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="btn-action btn-danger"
+                  (click)="openDeleteModal(playlist)"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty-state">No hay playlists creadas</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-delete-playlist-modal
+  [isOpen]="showDeleteModal()"
+  [playlistName]="selectedPlaylist()?.name ?? ''"
+  (closed)="showDeleteModal.set(false)"
+  (confirmed)="onDeleteConfirm()"
+/>

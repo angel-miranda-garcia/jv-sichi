@@ -1,0 +1,25 @@
+<app-modal-base
+  title="Eliminar Playlist"
+  [isOpen]="isOpen()"
+  (closed)="closed.emit()"
+>
+  <div modal-body>
+    <p>
+      ¿Estás seguro de que deseas eliminar
+      <strong>{{ playlistName() }}</strong>?
+    </p>
+  </div>
+
+  <div modal-footer>
+    <button type="button" class="btn-secondary" (click)="closed.emit()">
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="btn-primary btn-danger-confirm"
+      (click)="confirmed.emit()"
+    >
+      Sí, eliminar
+    </button>
+  </div>
+</app-modal-base>

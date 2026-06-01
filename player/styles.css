@@ -1,0 +1,79 @@
+:root {
+  --sichi-red: #E53935;
+  --sichi-black: #121212;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  cursor: none;
+}
+
+#waiting-screen,
+#error-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--sichi-black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: Inter, sans-serif;
+}
+
+#waiting-screen.hidden,
+#error-screen.hidden {
+  display: none;
+}
+
+.logo {
+  font-size: 64px;
+  font-weight: 800;
+  color: var(--sichi-red);
+  letter-spacing: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 4px;
+  margin-bottom: 32px;
+}
+
+.status-message {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.error-message {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  max-width: 80vw;
+  padding: 0 24px;
+}
+
+#sichi-player {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  background: #000;
+}
+
+#sichi-player.visible {
+  display: block;
+}
