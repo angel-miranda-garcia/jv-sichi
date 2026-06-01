@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sichi Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="waiting-screen">
+    <div class="logo">SICHI</div>
+    <div class="subtitle">DIGITAL SIGNAGE</div>
+    <div class="status-message" id="status-text">Cargando contenido...</div>
+  </div>
+
+  <div id="error-screen" style="display:none">
+    <div class="logo">SICHI</div>
+    <div class="error-message" id="error-text"></div>
+  </div>
+
+  <video id="sichi-player" autoplay muted playsinline style="display:none"></video>
+
+  <script src="indexeddb.js"></script>
+  <script src="cache.js"></script>
+  <script src="playlist.js"></script>
+  <script src="renderer.js"></script>
+  <script src="heartbeat.js"></script>
+  <script src="signalr.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
