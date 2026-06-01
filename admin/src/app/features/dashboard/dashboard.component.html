@@ -1,0 +1,78 @@
+<div class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+  <span class="admin-chip">Admin activo</span>
+</div>
+
+<div class="metrics-grid">
+  <div class="metric-card">
+    <span class="metric-card__value">{{ totalScreens() }}</span>
+    <span class="metric-card__label">Total Pantallas</span>
+  </div>
+  <div class="metric-card metric-card--online">
+    <span class="metric-card__value">{{ onlineScreens() }}</span>
+    <span class="metric-card__label">Online</span>
+  </div>
+  <div class="metric-card metric-card--offline">
+    <span class="metric-card__value">{{ offlineScreens() }}</span>
+    <span class="metric-card__label">Offline</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-header">
+    <span class="panel-title">Monitoreo en vivo</span>
+  </div>
+
+  @if (isLoading()) {
+    <p class="loading-text">Cargando...</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Ubicación</th>
+          <th>Estado</th>
+          <th>Playlist Activa</th>
+          <th>Último Ping</th>
+          <th>Acción Rápida</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (screen of screens(); track screen.id) {
+          <tr>
+            <td><strong>{{ screen.name }}</strong></td>
+            <td>
+              <span
+                class="status-pill"
+                [class.status-pill--online]="screen.isOnline"
+                [class.status-pill--offline]="!screen.isOnline"
+              >
+                <span class="status-pill__dot"></span>
+                {{ screen.isOnline ? 'Online' : 'Offline' }}
+              </span>
+            </td>
+            <td>{{ screen.currentPlaylistName ?? '—' }}</td>
+            <td>{{ formatLastPing(screen.lastPing) }}</td>
+            <td>
+              <button
+                type="button"
+                class="btn-secondary btn--sm"
+                [disabled]="!screen.isOnline"
+                [style.opacity]="screen.isOnline ? 1 : 0.5"
+                [style.cursor]="screen.isOnline ? 'pointer' : 'not-allowed'"
+                (click)="screen.isOnline && forceRefresh(screen)"
+              >
+                Forzar Refresh
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty-state">
+              No hay pantallas registradas
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

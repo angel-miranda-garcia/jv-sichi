@@ -1,0 +1,96 @@
+<div class="page-header">
+  <h1 class="page-title">Historial</h1>
+</div>
+
+<div class="filter-bar">
+  <select
+    class="filter-select"
+    [value]="filterAction()"
+    (change)="onFilterChange($event)"
+  >
+    <option value="all">Todas las acciones</option>
+    <option value="Created">Creación</option>
+    <option value="Updated">Actualización</option>
+    <option value="Deleted">Eliminación</option>
+    <option value="Login">Sistema</option>
+  </select>
+</div>
+
+<div class="card">
+  @if (isLoading()) {
+    <p class="loading-text">Cargando historial...</p>
+  } @else {
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Fecha / Hora</th>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>Entidad</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of auditLogs(); track log.id) {
+          <tr>
+            <td>{{ log.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ log.userEmail }}</td>
+            <td>
+              <span
+                class="action-badge"
+                [style.color]="getActionColor(log.action)"
+              >
+                {{ log.action }}
+              </span>
+            </td>
+            <td>{{ log.entityId }}</td>
+            <td class="detail-cell" [title]="log.detail">{{ log.detail }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty-state">
+              No hay registros en el historial
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (total() > 0) {
+      <div class="pagination">
+        <span class="pagination__info">
+          Mostrando {{ rangeStart() }} - {{ rangeEnd() }} de
+          {{ total() }} registros
+        </span>
+        <div class="pagination__controls">
+          <button
+            type="button"
+            class="pagination__btn"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+          >
+            Anterior
+          </button>
+          @for (page of pageNumbers(); track page) {
+            <button
+              type="button"
+              class="pagination__btn"
+              [class.pagination__btn--active]="page === currentPage()"
+              (click)="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+          }
+          <button
+            type="button"
+            class="pagination__btn"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -1,5 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ScreenService } from '../../core/services/screen.service';
@@ -27,6 +35,9 @@ interface NavItem {
 export class SidebarComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly screenService = inject(ScreenService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly isCollapsed = signal(false);
   readonly pendingCount = signal(0);
 
@@ -40,6 +51,13 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPendingCount();
+
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.loadPendingCount());
   }
 
   loadPendingCount(): void {
