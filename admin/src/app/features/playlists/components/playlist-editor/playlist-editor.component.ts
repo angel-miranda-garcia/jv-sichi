@@ -1,20 +1,16 @@
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  OnInit,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
   FormControl,
+  FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import {
   concatMap,
+  distinctUntilChanged,
   from,
   map,
   of,
@@ -48,14 +44,17 @@ export class PlaylistEditorComponent implements OnInit {
   private readonly playlistService = inject(PlaylistService);
   private readonly mediaService = inject(MediaService);
   private readonly toastService = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly playlistId = input<number | null>(null);
   readonly back = output<void>();
 
   readonly playlistDetail = signal<PlaylistDetail | null>(null);
-  readonly nameControl = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required],
+  readonly form = new FormGroup({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
   });
   readonly items = signal<PlaylistMediaItem[]>([]);
   readonly isLoading = signal(false);
@@ -64,14 +63,24 @@ export class PlaylistEditorComponent implements OnInit {
   readonly availableMedia = signal<MediaItem[]>([]);
 
   ngOnInit(): void {
-    const id = this.playlistId();
-    if (id != null) {
-      this.loadPlaylist(id);
-    } else {
-      this.items.set([]);
-      this.nameControl.setValue('');
-    }
     this.loadAvailableMedia();
+
+    toObservable(this.playlistId)
+      .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((id) => {
+        if (id != null) {
+          this.loadPlaylist(id);
+        } else {
+          this.resetForCreate();
+        }
+      });
+  }
+
+  private resetForCreate(): void {
+    this.playlistDetail.set(null);
+    this.items.set([]);
+    this.form.controls.name.setValue('');
+    this.form.controls.name.markAsUntouched();
   }
 
   loadPlaylist(id: number): void {
@@ -79,7 +88,7 @@ export class PlaylistEditorComponent implements OnInit {
     this.playlistService.getById(id).subscribe({
       next: (detail) => {
         this.playlistDetail.set(detail);
-        this.nameControl.setValue(detail.name);
+        this.form.controls.name.setValue(detail.name);
         this.items.set([...detail.items]);
         this.isLoading.set(false);
       },
@@ -133,16 +142,25 @@ export class PlaylistEditorComponent implements OnInit {
   }
 
   save(): void {
-    if (this.nameControl.invalid) {
+    const name = this.form.controls.name.value.trim();
+    if (!name) {
+      this.form.controls.name.setValue('');
+      this.form.controls.name.markAsTouched();
+      this.toastService.show(
+        'El nombre de la playlist es obligatorio',
+        'error'
+      );
       return;
     }
+
+    this.form.controls.name.setValue(name);
 
     this.isSaving.set(true);
     const existingId = this.playlistId();
     const saveOp$ =
       existingId != null
-        ? this.playlistService.update(existingId, this.nameControl.value)
-        : this.playlistService.create(this.nameControl.value);
+        ? this.playlistService.update(existingId, name)
+        : this.playlistService.create(name);
 
     saveOp$
       .pipe(

@@ -1,7 +1,7 @@
 @if (isLoading()) {
   <p class="loading-text">Cargando playlist...</p>
 } @else {
-  <div class="editor-header">
+  <form class="editor-header" [formGroup]="form" (ngSubmit)="save()">
     <button type="button" class="btn-back" (click)="back.emit()" title="Volver">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
@@ -12,23 +12,21 @@
     <input
       class="editor-title-input"
       type="text"
-      [formControl]="nameControl"
+      formControlName="name"
       placeholder="Nombre de la playlist"
+      [class.editor-title-input--invalid]="
+        form.controls.name.touched && form.controls.name.invalid
+      "
     />
     <div class="editor-actions">
       <button type="button" class="btn-secondary" (click)="back.emit()">
         Cancelar
       </button>
-      <button
-        type="button"
-        class="btn-primary"
-        [disabled]="isSaving()"
-        (click)="save()"
-      >
+      <button type="submit" class="btn-primary" [disabled]="isSaving()">
         {{ isSaving() ? 'Guardando...' : 'Guardar' }}
       </button>
     </div>
-  </div>
+  </form>
 
   <div class="card panel">
     <div class="panel-header">
